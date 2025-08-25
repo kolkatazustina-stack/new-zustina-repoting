@@ -1,0 +1,312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Zustina Production Report (v7)</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0b0b0b">
+<link rel="icon" href="icons/icon-192.png">
+<style>
+:root {
+  --bg: #0f172a; --panel:#111827; --muted:#94a3b8; --text:#e5e7eb; --pri:#22c55e; --btn:#1f2937; --red:#ef4444; --ring:#374151;
+}
+*{box-sizing:border-box} body{margin:0;background:var(--bg);color:var(--text);font:500 14px/1.35 system-ui,Segoe UI,Roboto,Arial,sans-serif;}
+.header{position:sticky;top:0;z-index:10;background:rgba(15,23,42,.8);backdrop-filter:blur(6px);border-bottom:1px solid #1f2937}
+.container{max-width:1000px;margin:auto;padding:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+.card{background:var(--panel);border:1px solid var(--ring);border-radius:16px;padding:14px}
+h1{margin:0;font-size:16px;display:flex;align-items:center;gap:10px}
+.badge{padding:4px 8px;border-radius:999px;border:1px solid #334155;font-size:12px;color:#cbd5e1}
+.badge.ok{border-color:#14532d;color:#bbf7d0}
+.btn{padding:10px 12px;border-radius:12px;border:1px solid #374151;background:var(--btn);color:#e5e7eb;cursor:pointer}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.btn.pri{background:#16a34a;border-color:#15803d}
+.btn.warn{background:#dc2626;border-color:#b91c1c}
+.btn.light{background:#0b0b0b}
+.grid-actions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.grid-actions.wide{grid-template-columns:repeat(6,1fr)}
+input,select{width:100%;padding:10px;border-radius:10px;border:1px solid #334155;background:#0b1220;color:var(--text)}
+table{width:100%;border-collapse:collapse;overflow:auto;display:block;max-width:100%}
+th,td{border:1px solid #2b3344;padding:6px;text-align:left}
+th{background:#0b1220;color:#cbd5e1;position:sticky;top:0}
+tfoot td{font-weight:700}
+.small{font-size:12px;color:var(--muted)}
+.logo{width:28px;height:28px;border-radius:10px;border:1px solid #1f2937}
+hr.sep{border:none;border-top:1px dashed #334155;margin:8px 0}
+@media (max-width:760px){.row,.row3{grid-template-columns:1fr} .grid-actions.wide{grid-template-columns:repeat(3,1fr)} }
+@media print{.no-print{display:none !important} body{background:white;color:black} .card{border:none} .header{display:none} }
+</style>
+</head>
+<body>
+<header class="header">
+  <div class="container" style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+    <h1><img id="logoImg" class="logo" src="icons/icon-192.png" alt="logo"> ZUSTINA PRODUCTION REPORT <span class="small">v7</span></h1>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span id="urlStatus" class="badge ok">Submit URL: Set</span>
+      <button id="btnInstall" class="btn no-print">Install</button>
+    </div>
+  </div>
+</header>
+
+<main class="container" style="display:grid;gap:12px;margin-top:10px">
+
+  <div class="grid-actions wide no-print">
+    <button id="btnNew" class="btn">Clear / New</button>
+    <button id="btnSave" class="btn">Save Draft</button>
+    <button id="btnCSV" class="btn">Export CSV</button>
+    <button id="btnPrint" class="btn">Print / PDF</button>
+    <button id="btnSetURL" class="btn">Set Submit URL</button>
+    <button id="btnSubmit" class="btn pri">Submit Report</button>
+  </div>
+
+  <section class="card">
+    <div class="row">
+      <div><label class="small">Batch No.</label><input id="batchNo" placeholder="e.g., ZG-2025-013"></div>
+      <div><label class="small">Product</label><input id="productName" placeholder="e.g., Granules Dana"></div>
+      <div><label class="small">Shade Code</label><input id="shadeCode" placeholder="e.g., 7A-201"></div>
+      <div><label class="small">Shade Name</label><input id="shadeName" placeholder="e.g., Dark Mehndi"></div>
+      <div><label class="small">Machine No.</label><input id="machineNo" placeholder="e.g., 03"></div>
+      <div><label class="small">Shift</label>
+        <select id="shift"><option>Morning</option><option>Evening</option><option>Night</option></select>
+      </div>
+      <div><label class="small">Date / Time</label><input id="dt" type="datetime-local" value="2025-08-25T12:40"></div>
+      <div></div>
+    </div>
+    <div class="row3" style="margin-top:10px">
+      <div><label class="small">Target Qty (kg)</label><input id="targetQty" type="number" placeholder="3000"></div>
+      <div><label class="small">Actual Qty (kg)</label><input id="actualQty" type="number" placeholder="2950"></div>
+      <div><label class="small">Variance (kg)</label><input id="variance" type="number" placeholder="auto" readonly></div>
+    </div>
+  </section>
+
+  <section class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <h3 style="margin:0;font-size:15px">Raw Material Consumption</h3>
+      <div class="no-print" style="display:flex;gap:8px">
+        <button id="btnAdd" class="btn">Add Row</button>
+        <button id="btnSingle" class="btn">Single Raw: Off</button>
+      </div>
+    </div>
+    <div style="overflow:auto">
+      <table id="matTable">
+        <thead>
+          <tr>
+            <th>#</th><th>Material</th><th>Code</th><th>Opening (kg)</th><th>Consumed (kg)</th><th>Closing (kg)</th><th>% Consumed</th><th class="no-print">Del</th>
+          </tr>
+        </thead>
+        <tbody id="matBody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">Totals</td>
+            <td id="tConsumed">0</td>
+            <td id="tClosing">0</td>
+            <td id="tPct" colspan="2"></td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+    <div class="small" style="margin-top:6px">Hint: Closing = Opening − Consumed; % = (Consumed / Opening) × 100</div>
+  </section>
+
+  <section class="card">
+    <div class="row">
+      <div><label class="small">Prepared By</label><input id="preparedBy"></div>
+      <div><label class="small">Approved By</label><input id="approvedBy"></div>
+    </div>
+  </section>
+
+</main>
+
+<script>
+// PWA Install
+let deferredPrompt=null;
+window.addEventListener('beforeinstallprompt',(e)=>{e.preventDefault();deferredPrompt=e;});
+document.getElementById('btnInstall').onclick=async()=>{if(!deferredPrompt)return;deferredPrompt.prompt();await deferredPrompt.userChoice;deferredPrompt=null;};
+if('serviceWorker' in navigator) window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js'));
+
+// State
+const inputs = {
+  batchNo: batchNo, productName: productName, shadeCode: shadeCode, shadeName: shadeName,
+  machineNo: machineNo, shift: shift, dt: dt, targetQty: targetQty, actualQty: actualQty,
+  variance: variance, preparedBy: preparedBy, approvedBy: approvedBy
+};
+const matBody = document.getElementById('matBody');
+const tConsumed = document.getElementById('tConsumed');
+const tClosing = document.getElementById('tClosing');
+
+// Defaults
+const defaultMaterials = [
+  {name:'WHITE DANA', code:''},
+  {name:'BLACK DANA', code:''},
+  {name:'DARK MEHNDI DANA', code:''},
+  {name:'RED DANA', code:''},
+  {name:'GOLDEN DANA', code:''},
+  {name:'MICA', code:''},
+];
+defaultMaterials.forEach(addRow);
+
+function renumber(){[...matBody.children].forEach((tr,i)=>tr.firstElementChild.textContent=i+1);}
+function addRow(m={name:'',code:'',open:'',con:'',clos:'',pct:''}) {
+  const tr=document.createElement('tr');
+  tr.innerHTML=`<td></td>
+    <td><input value="${m.name||''}"></td>
+    <td><input value="${m.code||''}"></td>
+    <td><input type="number" class="open" value="${m.open||''}"></td>
+    <td><input type="number" class="con" value="${m.con||''}"></td>
+    <td><input type="number" class="clos" value="${m.clos||''}" readonly></td>
+    <td><input type="number" class="pct" value="${m.pct||''}" readonly></td>
+    <td class="no-print" style="text-align:center"><button class="btn warn" type="button">×</button></td>`;
+  matBody.appendChild(tr);
+  bindRow(tr); renumber(); compute();
+}
+function bindRow(tr){
+  const open=tr.querySelector('.open'); const con=tr.querySelector('.con'); const clos=tr.querySelector('.clos'); const pct=tr.querySelector('.pct');
+  const del=tr.querySelector('button'); if(del) del.onclick=()=>{tr.remove(); renumber(); compute();};
+  function recalc(){
+    const o=parseFloat(open.value)||0; const c=parseFloat(con.value)||0;
+    const cl=o-c; const p=o>0? (c/o*100):0;
+    clos.value=(Math.round(cl*100)/100).toString();
+    pct.value=(Math.round(p*10)/10).toString();
+    compute();
+  }
+  open.oninput=recalc; con.oninput=recalc;
+}
+
+function compute(){
+  let sumCon=0,sumClos=0;
+  [...matBody.children].forEach(tr=>{
+    const c=parseFloat(tr.querySelector('.con').value)||0;
+    const cl=parseFloat(tr.querySelector('.clos').value)||0;
+    sumCon+=c; sumClos+=cl;
+  });
+  tConsumed.textContent=(Math.round(sumCon*100)/100).toString();
+  tClosing.textContent=(Math.round(sumClos*100)/100).toString();
+  const t=parseFloat(inputs.targetQty.value)||0; const a=parseFloat(inputs.actualQty.value)||0;
+  inputs.variance.value=(a-t).toString();
+}
+inputs.targetQty.oninput=compute; inputs.actualQty.oninput=compute;
+
+document.getElementById('btnAdd').onclick=()=>addRow();
+
+// Single Raw toggle
+let singleRaw = JSON.parse(localStorage.getItem('Z_SINGLE')||'false');
+const btnSingle = document.getElementById('btnSingle');
+function applySingle(on){
+  singleRaw=!!on; localStorage.setItem('Z_SINGLE', JSON.stringify(singleRaw));
+  btnSingle.textContent = 'Single Raw: ' + (singleRaw?'On':'Off');
+  const addBtn=document.getElementById('btnAdd');
+  if(singleRaw){
+    addBtn.disabled=true;
+    while(matBody.children.length>1) matBody.lastElementChild.remove();
+    const dels=matBody.querySelectorAll('td.no-print'); dels.forEach(td=>td.style.display='none');
+  } else {
+    addBtn.disabled=false;
+    const dels=matBody.querySelectorAll('td.no-print'); dels.forEach(td=>td.style.display='');
+  }
+}
+btnSingle.onclick=()=>applySingle(!singleRaw);
+window.addEventListener('load',()=>applySingle(singleRaw));
+
+// Save / New
+function collectData(){
+  const mats=[...matBody.children].map(tr=>{
+    const tds=tr.querySelectorAll('td');
+    return {
+      name: tds[1].querySelector('input').value,
+      code: tds[2].querySelector('input').value,
+      open: tds[3].querySelector('input').value,
+      con:  tds[4].querySelector('input').value,
+      clos: tds[5].querySelector('input').value,
+      pct:  tds[6].querySelector('input').value,
+    };
+  });
+  return {
+    batchNo: inputs.batchNo.value,
+    productName: inputs.productName.value,
+    shadeCode: inputs.shadeCode.value,
+    shadeName: inputs.shadeName.value,
+    machineNo: inputs.machineNo.value,
+    shift: inputs.shift.value,
+    dt: inputs.dt.value,
+    targetQty: inputs.targetQty.value,
+    actualQty: inputs.actualQty.value,
+    variance: inputs.variance.value,
+    preparedBy: inputs.preparedBy.value,
+    approvedBy: inputs.approvedBy.value,
+    materials: mats
+  };
+}
+document.getElementById('btnSave').onclick=()=>{ localStorage.setItem('Z_DRAFT_V7', JSON.stringify(collectData())); alert('Saved locally.'); };
+document.getElementById('btnNew').onclick=()=>{ if(confirm('Clear all data?')){ localStorage.removeItem('Z_DRAFT_V7'); location.reload(); } };
+(function loadDraft(){
+  const raw=localStorage.getItem('Z_DRAFT_V7'); if(!raw) return; try{
+    const d=JSON.parse(raw);
+    for(const k in inputs) if(d[k]!==undefined) inputs[k].value=d[k];
+    matBody.innerHTML=''; (d.materials||[]).forEach(addRow); compute();
+  }catch(e){console.warn(e);}
+})();
+
+// CSV Export
+document.getElementById('btnCSV').onclick=()=>{
+  const d=collectData();
+  const rows=[
+    ['Batch','Product','ShadeCode','ShadeName','Machine','Shift','DateTime','TargetQty','ActualQty','Variance','PreparedBy','ApprovedBy'],
+    [d.batchNo,d.productName,d.shadeCode,d.shadeName,d.machineNo,d.shift,d.dt,d.targetQty,d.actualQty,d.variance,d.preparedBy,d.approvedBy],
+    [],
+    ['Material','Code','Opening(kg)','Consumed(kg)','Closing(kg)','% Consumed']
+  ];
+  d.materials.forEach(m=>rows.push([m.name,m.code,m.open,m.con,m.clos,m.pct]));
+  const csv = rows.map(r=>r.map(x=>`"${(x??'').toString().replace(/"/g,'""')}"`).join(',')).join('\n');
+  const blob=new Blob([csv],{type:'text/csv'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download=`Zustina_${d.batchNo||'Batch'}.csv`; a.click();
+  URL.revokeObjectURL(a.href);
+};
+
+// Print
+document.getElementById('btnPrint').onclick=()=>window.print();
+
+// Submit URL manage
+const URL_KEY='Z_SUBMIT_URL_V7';
+const defaultURL = "https://script.google.com/macros/s/AKfycbzJeCgbwFym_y10kXFKbD6_r40vWRq06fjA8fudALRiHhe8_LAMLn31Eg4pfHSlpYBQBQ/exec";
+let SUBMIT_URL = localStorage.getItem(URL_KEY) || defaultURL;
+localStorage.setItem(URL_KEY, SUBMIT_URL);
+document.getElementById('btnSetURL').onclick=()=>{
+  const u=prompt('Paste your Google Apps Script Web App URL (must end with /exec):', SUBMIT_URL||'');
+  if(!u) return;
+  SUBMIT_URL=u.trim();
+  localStorage.setItem(URL_KEY, SUBMIT_URL);
+  document.getElementById('urlStatus').textContent='Submit URL: Set';
+  document.getElementById('urlStatus').className='badge ok';
+  alert('Submit URL saved.');
+};
+
+// Submit
+document.getElementById('btnSubmit').onclick=async()=>{
+  const d=collectData();
+  if(!d.batchNo || !d.productName) { alert('Please fill at least Batch No and Product.'); return; }
+  if(!SUBMIT_URL || !/^https?:\/\//.test(SUBMIT_URL)) { alert('Submit URL not set.'); return; }
+  try {
+    // Use text/plain to avoid preflight; Apps Script can still JSON.parse body
+    const res = await fetch(SUBMIT_URL, { method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(d) });
+    // Try to read text; if CORS blocks, still assume success and ask user to check sheet
+    let ok=false, txt='';
+    try { txt=await res.text(); ok = res.ok && /OK|ok|{\"ok\":true}/i.test(txt); } catch(_){
+      ok = res.ok;
+    }
+    if(ok) alert('Submitted ✓\nResponse: '+(txt||'OK'));
+    else alert('Submitted? Please verify Sheet.\nServer said: '+(txt||('HTTP '+res.status)));
+  } catch(e) {
+    // Last fallback: no-cors
+    try {
+      await fetch(SUBMIT_URL, { method:'POST', mode:'no-cors', headers:{'Content-Type':'text/plain'}, body: JSON.stringify(d) });
+      alert('Submitted (no-cors). Please verify in Google Sheet.');
+    } catch(err) {
+      alert('Submit failed: '+err);
+    }
+  }
+};
+</script>
+</body>
+</html>
